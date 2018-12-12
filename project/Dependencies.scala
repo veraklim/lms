@@ -3,11 +3,13 @@ import sbt._
 object Dependencies {
 
   object version {
-    val sql = "1.0.392"
+    val sql = "3.18.0"
+    val quill = "2.6.0"
   }
 
   val sql = Seq(
-    "com.almworks.sqlite4java" % "sqlite4java" % version.sql,
+    "org.xerial" % "sqlite-jdbc" % version.sql,
+    "io.getquill" %% "quill-jdbc" % version.quill
   )
 
 }
