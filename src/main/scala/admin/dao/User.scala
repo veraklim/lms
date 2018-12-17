@@ -1,18 +1,25 @@
 package admin.dao
 
 trait User {
+  val id: String
   val firstName: String
   val middleName: String
   val lastName: String
-  val code: String
+  val code: Int
 }
 
-abstract case class Student(
-    group: String,
+case class Student(
+    id: String,
+    firstName: String,
+    middleName: String,
+    lastName: String,
+    code: Int,
+    groupName: String,
     entryYear: String,
     grade: String,
     form: String,
     basis: String
 ) extends User
 
-abstract case class Teacher() extends User
+case class Teacher(id: String, firstName: String, middleName: String, lastName: String, code: Int)
+    extends User

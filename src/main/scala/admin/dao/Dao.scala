@@ -1,37 +1,77 @@
 package admin.dao
 
-import java.io.File
+class Dao() {
 
-import com.almworks.sqlite4java.{SQLiteConnection, SQLiteStatement}
+  import admin.dao.SQLContext._
+  import Tables._
 
-abstract class Dao {
-  def createCourse(course: Course): Unit
-  def addGroup(group: Group, course: Course): Unit
-  def addTeacher(teacher: Teacher, course: Course): Unit
-  def addUser(user: User): Unit
-}
-
-class DaoImpl() extends Dao{
-  def createCourse(course: Course): Unit = {
-    val db: SQLiteConnection = new SQLiteConnection(new File("/tmp/database"))
-    db.open(true)
-    SQLiteStatement st = db.prepare("SELECT order_id FROM orders WHERE quantity >= ?")
-    try {
-      st.bind(1, minimumQuantity);
-      while (st.step()) {
-        orders.add(st.columnLong(0));
-      }
-    } finally {
-      st.dispose();
-    }
-    ...
-    db.dispose();
+  private def checkCourse(id: Int) = quote {
+    courses.filter(_.id == lift(id)).isEmpty
+  }
+  private def checkGroup(group: Group) = quote {
+    groups.filter(_.name == lift(group.name)).isEmpty
+  }
+  private def checkTeacher(teacher: Teacher) = quote {
+    teachers.filter(_.id == lift(teacher.id)).isEmpty
   }
 
-  def addGroup(group: Group, course: Course): Unit = ???
+  def createGroup(group: Group): Unit = {
+    val newGroup = quote {
+      groups.insert(lift(group))
+    }
+    if (!run(checkCourse(group.courseId))) {
+      if (run(checkGroup(group)))
+        run(newGroup)
+      else println(s"Such group already exists, name - ${group.name}")
+    } else println(s"No such course, courseId - ${group.courseId}")
+  }
 
-  def addTeacher(teacher: Teacher, course: Course): Unit = ???
+  def createCourse(course: Course): Unit = {
+    val newCourse = quote {
+      courses.insert(lift(course))
+    }
+    if (run(checkCourse(course.id)))
+      run(newCourse)
+    else println(s"Such course already exists, id - ${course.id}, name - ${course.name}")
+  }
 
-  def addUser(user: User): Unit = ???
+  def createUser(student: Student): Unit = {
+    val newStudent = quote {
+      students.insert(lift(student))
+    }
+    run(newStudent)
+  }
+
+  def createUser(teacher: Teacher): Unit = {
+    val newTeacher = quote {
+      teachers.insert(lift(teacher))
+    }
+    run(newTeacher)
+  }
+
+  def addGroupToCourse(group: Group, course: Course): Unit = {
+    val add = quote {
+      studycourse.insert(lift(StudyCourse(course.id, group.name)))
+    }
+    if (!run(checkCourse(course.id))) {
+      if (!run(checkGroup(group)))
+        run(add)
+      else println(s"No such group, name - ${group.name}")
+    } else println(s"No such course, id - ${course.id}, name - ${course.name}")
+  }
+
+  def addTeacherToCourse(teacher: Teacher, course: Course): Unit = {
+    val add = quote {
+      teachcourse.insert(lift(TeachCourse(course.id, teacher.id)))
+    }
+    if (!run(checkCourse(course.id))) {
+      if (!run(checkTeacher(teacher)))
+        run(add)
+      else
+        println(
+          s"No such teacher, id - ${teacher.id}, name - " + teacher.lastName + " " + teacher.firstName + " " + teacher.middleName
+        )
+    } else println(s"No such course, id - ${course.id}, name - ${course.name}")
+  }
 
 }
